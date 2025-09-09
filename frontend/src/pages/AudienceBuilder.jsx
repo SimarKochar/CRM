@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Target,
@@ -12,6 +13,8 @@ import {
 } from "lucide-react";
 
 const AudienceBuilder = () => {
+  const navigate = useNavigate();
+  
   const [currentSegment, setCurrentSegment] = useState({
     name: "",
     description: "",
@@ -136,6 +139,9 @@ const AudienceBuilder = () => {
       rules: [{ field: "totalSpent", operator: ">", value: "", logic: null }],
     });
     setPreviewSize(null);
+
+    // Redirect to Campaign History page
+    navigate("/campaign-history");
   };
 
   const formatRuleText = (rule) => {

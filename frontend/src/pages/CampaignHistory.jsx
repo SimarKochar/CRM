@@ -10,6 +10,8 @@ import {
   MoreHorizontal,
   Filter,
   Search,
+  AlertCircle,
+  Target,
 } from "lucide-react";
 
 const CampaignHistory = () => {
@@ -181,8 +183,53 @@ const CampaignHistory = () => {
           </div>
         </div>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* Core Metrics Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600">Total Messages Sent</p>
+                <p className="text-3xl font-bold text-blue-700">
+                  {campaigns
+                    .reduce((sum, c) => sum + c.sent, 0)
+                    .toLocaleString()}
+                </p>
+              </div>
+              <Send size={28} className="text-blue-600" />
+            </div>
+          </div>
+
+          <div className="bg-red-50 rounded-xl p-6 border border-red-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-600">Total Failed</p>
+                <p className="text-3xl font-bold text-red-700">
+                  {campaigns
+                    .reduce((sum, c) => sum + c.failed, 0)
+                    .toLocaleString()}
+                </p>
+              </div>
+              <AlertCircle size={28} className="text-red-600" />
+            </div>
+          </div>
+
+          <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600">Total Audience Size</p>
+                <p className="text-3xl font-bold text-purple-700">
+                  {campaigns
+                    .reduce((sum, c) => sum + c.audienceSize, 0)
+                    .toLocaleString()}
+                </p>
+              </div>
+              <Users size={28} className="text-purple-600" />
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
@@ -191,21 +238,7 @@ const CampaignHistory = () => {
                   {campaigns.length}
                 </p>
               </div>
-              <Send size={24} className="text-blue-600" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Messages Sent</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {campaigns
-                    .reduce((sum, c) => sum + c.sent, 0)
-                    .toLocaleString()}
-                </p>
-              </div>
-              <Users size={24} className="text-green-600" />
+              <Target size={24} className="text-blue-600" />
             </div>
           </div>
 
@@ -225,25 +258,7 @@ const CampaignHistory = () => {
                   %
                 </p>
               </div>
-              <CheckCircle size={24} className="text-purple-600" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Avg. Open Rate</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {(
-                    campaigns
-                      .filter((c) => c.delivered > 0)
-                      .reduce((sum, c) => sum + parseFloat(getOpenRate(c)), 0) /
-                      campaigns.filter((c) => c.delivered > 0).length || 0
-                  ).toFixed(1)}
-                  %
-                </p>
-              </div>
-              <Eye size={24} className="text-orange-600" />
+              <CheckCircle size={24} className="text-green-600" />
             </div>
           </div>
         </div>
@@ -290,43 +305,31 @@ const CampaignHistory = () => {
                       users
                     </p>
 
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {/* Core Metrics - Sent, Failed, Audience Size */}
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-2xl font-bold text-blue-700">{campaign.sent.toLocaleString()}</p>
+                        <p className="text-sm font-medium text-blue-600">Messages Sent</p>
+                      </div>
+                      <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
+                        <p className="text-2xl font-bold text-red-700">{campaign.failed.toLocaleString()}</p>
+                        <p className="text-sm font-medium text-red-600">Failed</p>
+                      </div>
+                      <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <p className="text-2xl font-bold text-purple-700">{campaign.audienceSize.toLocaleString()}</p>
+                        <p className="text-sm font-medium text-purple-600">Audience Size</p>
+                      </div>
+                    </div>
+
+                    {/* Additional Stats (Secondary) */}
+                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100">
                       <div className="text-center">
-                        <p className="text-lg font-bold text-gray-900">
-                          {campaign.sent.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500">Sent</p>
+                        <p className="text-lg font-semibold text-green-600">{campaign.delivered.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">Delivered ({getDeliveryRate(campaign)}%)</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-lg font-bold text-green-600">
-                          {campaign.delivered.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Delivered ({getDeliveryRate(campaign)}%)
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-red-600">
-                          {campaign.failed.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500">Failed</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-blue-600">
-                          {campaign.opened.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Opened ({getOpenRate(campaign)}%)
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-purple-600">
-                          {campaign.clicked.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Clicked ({getClickRate(campaign)}%)
-                        </p>
+                        <p className="text-lg font-semibold text-blue-600">{campaign.opened.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">Opened ({getOpenRate(campaign)}%)</p>
                       </div>
                     </div>
 
