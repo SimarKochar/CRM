@@ -14,7 +14,7 @@ import {
 
 const AudienceBuilder = () => {
   const navigate = useNavigate();
-  
+
   const [currentSegment, setCurrentSegment] = useState({
     name: "",
     description: "",

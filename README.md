@@ -9,20 +9,23 @@ A modern, responsive Customer Relationship Management (CRM) platform focused on 
 ## 🚀 Features
 
 ### 🔐 Authentication
+
 - Secure login interface
 - User session management
 - Demo credentials for testing
 
 ### 🎯 Audience Builder (Main Feature)
+
 - **Dynamic Rule Builder**: Create complex audience segments using flexible rule logic
 - **Boolean Logic Support**: Use AND/OR operators for sophisticated targeting
 - **Real-time Preview**: Calculate audience size before saving segments
-- **Rule Examples**: 
+- **Rule Examples**:
   - `spend > INR 10,000 AND visits < 3`
   - `inactive for 90 days OR cart abandoned`
 - **Segment Management**: Save, search, and reuse audience segments
 
 ### 📊 Campaign History
+
 - View all past campaigns and their performance
 - Detailed delivery statistics (sent, delivered, opened, clicked)
 - Campaign status tracking (active, completed, scheduled)
@@ -40,28 +43,33 @@ A modern, responsive Customer Relationship Management (CRM) platform focused on 
 ## 📦 Installation & Setup
 
 ### Prerequisites
+
 - Node.js (v16 or higher)
 - npm or yarn
 
 ### Installation Steps
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/SimarKochar/CRM-Frontend.git
    cd CRM-Frontend
    ```
 
 2. **Navigate to frontend directory**
+
    ```bash
    cd frontend
    ```
 
 3. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 4. **Start development server**
+
    ```bash
    npm run dev
    ```
@@ -74,12 +82,14 @@ A modern, responsive Customer Relationship Management (CRM) platform focused on 
 ## 🎮 Usage
 
 ### Getting Started
+
 1. **Login**: Use demo credentials (demo@example.com / password)
 2. **Build Audience**: Create customer segments with rule-based logic
 3. **Preview**: Check audience size before saving
 4. **View History**: Monitor campaign performance and results
 
 ### Demo Credentials
+
 - **Email**: demo@example.com
 - **Password**: password
 
@@ -107,21 +117,27 @@ frontend/
 ## 🎯 Key Components
 
 ### AudienceBuilder
+
 The main interactive component allowing users to:
+
 - Define audience segments using flexible rule logic
 - Add multiple conditions with AND/OR operators
 - Preview audience size in real-time
 - Save and manage segments
 
 ### CampaignHistory
+
 Displays comprehensive campaign analytics:
+
 - Campaign performance metrics
 - Delivery statistics
 - Historical data visualization
 - Status tracking
 
 ### Login
+
 Secure authentication with:
+
 - Form validation
 - Loading states
 - Error handling
@@ -183,6 +199,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Simar Kochar**
+
 - GitHub: [@SimarKochar](https://github.com/SimarKochar)
 
 ## 🙏 Acknowledgments
