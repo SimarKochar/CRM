@@ -1,8 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 
 const Login = ({ onLogin }) => {
+  const navigate = useNavigate();
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
   });
@@ -15,24 +19,51 @@ const Login = ({ onLogin }) => {
     setIsLoading(true);
     setError("");
 
-    // Simulate API call
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Determine endpoint based on mode
+      const endpoint = isRegisterMode
+        ? "/api/auth/register"
+        : "/api/auth/login";
+      const requestBody = isRegisterMode
+        ? {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+          }
+        : { email: formData.email, password: formData.password };
 
-      // Mock authentication - accept any email/password for demo
-      if (formData.email && formData.password) {
-        const userData = {
-          id: 1,
-          name: formData.email.split("@")[0],
-          email: formData.email,
-          role: "Marketing Manager",
-        };
-        onLogin(userData);
+      // Call the backend API
+      const response = await fetch(`http://localhost:5000${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Store token in localStorage
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+
+        // Pass user data to parent component
+        onLogin(data.data.user);
+        
+        // Navigate to dashboard
+        navigate("/dashboard");
       } else {
-        setError("Please enter both email and password");
+        setError(
+          data.message ||
+            `${
+              isRegisterMode ? "Registration" : "Login"
+            } failed. Please try again.`
+        );
       }
     } catch (err) {
-      setError("Login failed. Please try again.");
+      console.error(`${isRegisterMode ? "Registration" : "Login"} error:`, err);
+      setError("Unable to connect to server. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -62,9 +93,13 @@ const Login = ({ onLogin }) => {
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Welcome Back
+              {isRegisterMode ? "Create Account" : "Welcome Back"}
             </h2>
-            <p className="text-gray-600">Sign in to your account to continue</p>
+            <p className="text-gray-600">
+              {isRegisterMode
+                ? "Sign up for a new account to get started"
+                : "Sign in to your account to continue"}
+            </p>
           </div>
 
           {error && (
@@ -74,6 +109,34 @@ const Login = ({ onLogin }) => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Name Field - only show in register mode */}
+            {isRegisterMode && (
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User
+                    size={20}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  />
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Enter your full name"
+                    required={isRegisterMode}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Email Field */}
             <div>
               <label
@@ -156,25 +219,49 @@ const Login = ({ onLogin }) => {
               {isLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Signing in...
+                  {isRegisterMode ? "Creating Account..." : "Signing in..."}
                 </>
+              ) : isRegisterMode ? (
+                "Create Account"
               ) : (
                 "Sign In"
               )}
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>Demo Credentials:</strong>
-            </p>
-            <p className="text-xs text-gray-500">
-              Email: demo@example.com
-              <br />
-              Password: password
+          {/* Mode Toggle */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              {isRegisterMode
+                ? "Already have an account?"
+                : "Don't have an account?"}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegisterMode(!isRegisterMode);
+                  setError("");
+                  setFormData({ name: "", email: "", password: "" });
+                }}
+                className="ml-1 text-blue-600 hover:text-blue-700 font-medium"
+              >
+                {isRegisterMode ? "Sign in here" : "Create one here"}
+              </button>
             </p>
           </div>
+
+          {/* Demo Credentials */}
+          {!isRegisterMode && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>Demo Credentials:</strong>
+              </p>
+              <p className="text-xs text-gray-500">
+                Email: demo@example.com
+                <br />
+                Password: demo123
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

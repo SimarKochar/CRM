@@ -30,14 +30,44 @@ const Header = ({ user, onLogout }) => {
           {/* Navigation */}
           <nav className="hidden md:flex space-x-1">
             <Link
+              to="/dashboard"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                isActive("/") || isActive("/dashboard")
+                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              Dashboard
+            </Link>
+            <Link
+              to="/customers"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                isActive("/customers")
+                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              Customers
+            </Link>
+            <Link
               to="/audience-builder"
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                isActive("/") || isActive("/audience-builder")
+                isActive("/audience-builder")
                   ? "bg-blue-50 text-blue-700 border border-blue-200"
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               }`}
             >
               Audience Builder
+            </Link>
+            <Link
+              to="/campaigns"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                isActive("/campaigns")
+                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              Campaigns
             </Link>
             <Link
               to="/campaign-history"
