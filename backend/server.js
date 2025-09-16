@@ -33,7 +33,10 @@ app.use('/api/', limiter);
 
 // CORS configuration
 const corsOptions = {
-    origin: process.env.NODE_ENV === 'development' ? true : (process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173']),
+    origin: process.env.NODE_ENV === 'development' ? true : (process.env.CORS_ORIGIN?.split(',') || [
+        'http://localhost:5173',
+        'https://minicrm-9zof4rlmt-simars-projects-be3ebafd.vercel.app'
+    ]),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
