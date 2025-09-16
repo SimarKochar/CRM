@@ -9,10 +9,7 @@ import {
   ArrowLeft,
   Target,
   Mail,
-  Wand2,
-  Sparkles,
 } from "lucide-react";
-import AIEmailGenerator from "../components/AIEmailGenerator";
 
 const Campaigns = () => {
   const navigate = useNavigate();
@@ -26,7 +23,6 @@ const Campaigns = () => {
   const [audienceSegments, setAudienceSegments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [segmentsLoading, setSegmentsLoading] = useState(true);
-  const [showAIGenerator, setShowAIGenerator] = useState(false);
 
   // Fetch audience segments for dropdown
   useEffect(() => {
@@ -35,20 +31,26 @@ const Campaigns = () => {
 
   const fetchAudienceSegments = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/audience', {
+      const token = localStorage.getItem("token");
+      console.log("Fetching audience segments...");
+      const response = await fetch("http://localhost:5001/api/audience", {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
       if (response.ok) {
         const data = await response.json();
-        setAudienceSegments(data.data.segments || []);
+        console.log("API Response:", data);
+        // Fix: segments are in data field, not data.data.segments
+        setAudienceSegments(data.data || []);
+        console.log("Set segments:", data.data || []);
+      } else {
+        console.error("Failed to fetch segments:", response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Error fetching audience segments:', error);
+      console.error("Error fetching audience segments:", error);
     } finally {
       setSegmentsLoading(false);
     }
@@ -66,21 +68,21 @@ const Campaigns = () => {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/campaigns', {
-        method: 'POST',
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:5001/api/campaigns", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: campaignData.name,
           content: {
             subject: campaignData.subject,
-            message: campaignData.content
+            message: campaignData.content,
           },
           audienceSegment: campaignData.audienceSegment,
-          type: 'email'
+          type: "email",
         }),
       });
 
@@ -92,19 +94,11 @@ const Campaigns = () => {
         alert(`Error creating campaign: ${errorData.message}`);
       }
     } catch (error) {
-      console.error('Error creating campaign:', error);
-      alert('Failed to create campaign. Please try again.');
+      console.error("Error creating campaign:", error);
+      alert("Failed to create campaign. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleAIGenerated = (aiContent) => {
-    setCampaignData(prev => ({
-      ...prev,
-      subject: aiContent.subject,
-      content: aiContent.content.body
-    }));
   };
 
   return (
@@ -152,20 +146,9 @@ const Campaigns = () => {
 
             {/* Email Subject */}
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Email Subject
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowAIGenerator(true)}
-                  className="flex items-center px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-                >
-                  <Wand2 className="mr-1" size={14} />
-                  AI Generate
-                  <Sparkles className="ml-1" size={12} />
-                </button>
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Subject
+              </label>
               <input
                 type="text"
                 name="subject"
@@ -207,13 +190,18 @@ const Campaigns = () => {
                 disabled={segmentsLoading}
               >
                 <option value="">
-                  {segmentsLoading ? 'Loading segments...' : 'Select audience segment'}
+                  {segmentsLoading
+                    ? "Loading segments..."
+                    : "Select audience segment"}
                 </option>
-                {audienceSegments.map((segment) => (
-                  <option key={segment._id} value={segment._id}>
-                    {segment.name} ({segment.audienceSize || 0} users)
-                  </option>
-                ))}
+                {audienceSegments.map((segment) => {
+                  console.log("Rendering segment:", segment);
+                  return (
+                    <option key={segment._id} value={segment._id}>
+                      {segment.name} ({segment.audienceSize || 0} users)
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -232,19 +220,12 @@ const Campaigns = () => {
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send size={20} />
-                <span>{isLoading ? 'Creating...' : 'Create Campaign'}</span>
+                <span>{isLoading ? "Creating..." : "Create Campaign"}</span>
               </button>
             </div>
           </form>
         </div>
       </div>
-
-      {/* AI Email Generator Modal */}
-      <AIEmailGenerator
-        isOpen={showAIGenerator}
-        onClose={() => setShowAIGenerator(false)}
-        onApply={handleAIGenerated}
-      />
     </div>
   );
 };

@@ -1,11 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { Bell, User, ChevronDown, LogOut } from "lucide-react";
+import { User, ChevronDown, LogOut } from "lucide-react";
 import { useState } from "react";
 
 const Header = ({ user, onLogout }) => {
   const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [notifications] = useState(3); // Mock notification count
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -87,18 +86,6 @@ const Header = ({ user, onLogout }) => {
             <div className="hidden sm:block text-right">
               <p className="text-sm font-medium text-gray-900">{user?.name}</p>
               <p className="text-xs text-gray-500">{user?.role}</p>
-            </div>
-
-            {/* Notifications */}
-            <div className="relative">
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
-                <Bell size={20} className="text-gray-600" />
-                {notifications > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {notifications}
-                  </span>
-                )}
-              </button>
             </div>
 
             {/* Profile Menu */}

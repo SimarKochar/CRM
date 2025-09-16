@@ -33,7 +33,7 @@ const Login = ({ onLogin }) => {
         : { email: formData.email, password: formData.password };
 
       // Call the backend API
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
+      const response = await fetch(`http://localhost:5001${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,7 +50,7 @@ const Login = ({ onLogin }) => {
 
         // Pass user data to parent component
         onLogin(data.data.user);
-        
+
         // Navigate to dashboard
         navigate("/dashboard");
       } else {
@@ -248,20 +248,6 @@ const Login = ({ onLogin }) => {
               </button>
             </p>
           </div>
-
-          {/* Demo Credentials */}
-          {!isRegisterMode && (
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-2">
-                <strong>Demo Credentials:</strong>
-              </p>
-              <p className="text-xs text-gray-500">
-                Email: demo@example.com
-                <br />
-                Password: demo123
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Footer */}

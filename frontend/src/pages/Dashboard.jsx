@@ -1,273 +1,330 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Users,
   Mail,
   Target,
-  TrendingUp,
-  BarChart3,
-  Calendar,
-  DollarSign,
   Activity,
-  ArrowUp,
-  ArrowDown,
-  Eye,
-  MousePointer,
   Send,
   CheckCircle,
+  Plus,
+  TrendingUp,
+  BarChart3,
+  PieChart,
+  Calendar,
 } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 const Dashboard = () => {
-  const [stats] = useState({
-    totalCustomers: 15847,
-    activeCampaigns: 12,
-    audienceSegments: 8,
-    monthlyRevenue: 89430,
-    emailsSent: 156789,
-    openRate: 24.5,
-    clickRate: 3.2,
-    conversionRate: 1.8,
-  });
+  const navigate = useNavigate();
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [monthlyData] = useState([
-    { month: 'Jan', revenue: 65000, customers: 12400, campaigns: 8 },
-    { month: 'Feb', revenue: 72000, customers: 13100, campaigns: 10 },
-    { month: 'Mar', revenue: 68000, customers: 13800, campaigns: 9 },
-    { month: 'Apr', revenue: 78000, customers: 14200, campaigns: 11 },
-    { month: 'May', revenue: 85000, customers: 14900, campaigns: 13 },
-    { month: 'Jun', revenue: 89430, customers: 15847, campaigns: 12 },
-  ]);
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, []);
 
-  const [topCampaigns] = useState([
-    { name: 'Summer Sale 2025', sent: 8945, opened: 4782, clicked: 892, revenue: 12450 },
-    { name: 'Welcome Series', sent: 3421, opened: 2103, clicked: 567, revenue: 8900 },
-    { name: 'Product Launch', sent: 5678, opened: 2839, clicked: 423, revenue: 6700 },
-    { name: 'Newsletter #24', sent: 12340, opened: 3456, clicked: 234, revenue: 3400 },
-  ]);
+  const fetchAnalyticsData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      
+      console.log("Fetching analytics data...");
+      const response = await fetch("http://localhost:5001/api/analytics/dashboard", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-  const maxRevenue = Math.max(...monthlyData.map(d => d.revenue));
-
-  // Simple chart component
-  const BarChart = ({ data, dataKey, color = "bg-blue-500" }) => {
-    const maxValue = Math.max(...data.map(d => d[dataKey]));
-    return (
-      <div className="flex items-end space-x-2 h-32">
-        {data.map((item, index) => (
-          <div key={index} className="flex flex-col items-center flex-1">
-            <div 
-              className={`${color} w-full rounded-t transition-all duration-500 hover:opacity-80`}
-              style={{ 
-                height: `${(item[dataKey] / maxValue) * 100}%`,
-                minHeight: '4px'
-              }}
-            ></div>
-            <span className="text-xs text-gray-500 mt-1">{item.month}</span>
-          </div>
-        ))}
-      </div>
-    );
+      console.log("Analytics response status:", response.status);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Analytics data received:", data);
+        setAnalyticsData(data.data);
+      } else {
+        console.error("Failed to fetch analytics data:", response.status);
+        const errorData = await response.text();
+        console.error("Error details:", errorData);
+      }
+    } catch (error) {
+      console.error("Error fetching analytics data:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-100 text-green-700";
+      case "sending":
+        return "bg-blue-100 text-blue-700";
+      case "draft":
+        return "bg-gray-100 text-gray-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  // Colors for charts
+  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600">Loading analytics...</span>
+      </div>
+    );
+  }
+
+  if (!analyticsData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Analytics Data</h2>
+          <p className="text-gray-600">Create some campaigns to see analytics</p>
+          <button
+            onClick={() => navigate("/campaigns")}
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Create Campaign
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { metrics, charts, topCampaigns } = analyticsData;
+
+  // Transform data for charts
+  const deliveryStatsData = charts.deliveryStats.map(item => ({
+    name: item._id.charAt(0).toUpperCase() + item._id.slice(1),
+    value: item.count
+  }));
+
+  const campaignTypesData = charts.campaignTypes.map(item => ({
+    type: item._id.toUpperCase(),
+    total: item.count,
+    completed: item.completed
+  }));
+
+  const recentActivityData = charts.recentActivity.map(item => ({
+    date: formatDate(item._id),
+    sent: item.sent,
+    failed: item.failed,
+    pending: item.pending
+  }));
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <BarChart3 className="mr-3 text-blue-600" size={32} />
-            Dashboard
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Welcome back! Here's what's happening with your CRM.
-          </p>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+            <p className="text-gray-600 mt-2">Campaign performance insights and metrics</p>
+          </div>
+          <button
+            onClick={() => navigate("/campaigns")}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          >
+            <Plus size={20} />
+            <span>New Campaign</span>
+          </button>
         </div>
 
-        {/* Main Stats Grid */}
+        {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Customers</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.totalCustomers.toLocaleString()}</p>
+                <p className="text-sm font-medium text-gray-600">Total Campaigns</p>
+                <p className="text-3xl font-bold text-gray-900">{metrics.totalCampaigns}</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Users className="text-blue-600" size={28} />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center">
-              <ArrowUp className="text-green-500 mr-1" size={16} />
-              <span className="text-green-500 text-sm font-medium">+12.5%</span>
-              <span className="text-gray-600 text-sm ml-1">from last month</span>
+              <Mail size={32} className="text-blue-600" />
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                <p className="text-3xl font-bold text-gray-900">${stats.monthlyRevenue.toLocaleString()}</p>
+                <p className="text-sm font-medium text-gray-600">Messages Sent</p>
+                <p className="text-3xl font-bold text-gray-900">{metrics.successfulMessages.toLocaleString()}</p>
               </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <DollarSign className="text-green-600" size={28} />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center">
-              <ArrowUp className="text-green-500 mr-1" size={16} />
-              <span className="text-green-500 text-sm font-medium">+8.2%</span>
-              <span className="text-gray-600 text-sm ml-1">from last month</span>
+              <Send size={32} className="text-green-600" />
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Campaigns</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.activeCampaigns}</p>
+                <p className="text-sm font-medium text-gray-600">Success Rate</p>
+                <p className="text-3xl font-bold text-gray-900">{metrics.overallSuccessRate}%</p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Mail className="text-purple-600" size={28} />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center">
-              <Activity className="text-blue-500 mr-1" size={16} />
-              <span className="text-blue-500 text-sm font-medium">3 scheduled</span>
-              <span className="text-gray-600 text-sm ml-1">for this week</span>
+              <CheckCircle size={32} className="text-green-600" />
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Audience Segments</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.audienceSegments}</p>
+                <p className="text-3xl font-bold text-gray-900">{metrics.totalAudienceSegments}</p>
               </div>
-              <div className="p-3 bg-yellow-100 rounded-lg">
-                <Target className="text-yellow-600" size={28} />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center">
-              <ArrowUp className="text-green-500 mr-1" size={16} />
-              <span className="text-green-500 text-sm font-medium">2 new</span>
-              <span className="text-gray-600 text-sm ml-1">this month</span>
+              <Target size={32} className="text-purple-600" />
             </div>
           </div>
         </div>
 
-        {/* Performance Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Emails Sent</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.emailsSent.toLocaleString()}</p>
-              </div>
-              <Send className="text-blue-500" size={24} />
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Open Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.openRate}%</p>
-              </div>
-              <Eye className="text-green-500" size={24} />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Click Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.clickRate}%</p>
-              </div>
-              <MousePointer className="text-purple-500" size={24} />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.conversionRate}%</p>
-              </div>
-              <CheckCircle className="text-yellow-500" size={24} />
-            </div>
-          </div>
-        </div>
-
-        {/* Charts Section */}
+        {/* Charts Grid - Simplified to 2 meaningful charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Revenue Chart */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          {/* Delivery Status Distribution */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900">Monthly Revenue</h3>
-              <TrendingUp className="text-green-500" size={20} />
+              <h3 className="text-lg font-semibold text-gray-900">Message Delivery Status</h3>
+              <PieChart size={20} className="text-gray-400" />
             </div>
-            <BarChart data={monthlyData} dataKey="revenue" color="bg-green-500" />
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-600">Last 6 months performance</p>
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <RechartsPieChart>
+                <Pie
+                  data={deliveryStatsData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {deliveryStatsData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </RechartsPieChart>
+            </ResponsiveContainer>
           </div>
 
-          {/* Customer Growth Chart */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          {/* Campaign Performance Summary */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900">Customer Growth</h3>
-              <Users className="text-blue-500" size={20} />
+              <h3 className="text-lg font-semibold text-gray-900">Campaign Performance</h3>
+              <Activity size={20} className="text-gray-400" />
             </div>
-            <BarChart data={monthlyData} dataKey="customers" color="bg-blue-500" />
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-600">New customers acquired monthly</p>
+            
+            {/* Performance Stats */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-blue-600 font-medium">Total Sent</p>
+                  <p className="text-2xl font-bold text-blue-900">{metrics.totalMessages}</p>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <p className="text-sm text-green-600 font-medium">Success Rate</p>
+                  <p className="text-2xl font-bold text-green-900">{metrics.overallSuccessRate}%</p>
+                </div>
+              </div>
+              
+              {/* Campaign List */}
+              <div className="mt-6">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Recent Campaigns</h4>
+                <div className="space-y-3">
+                  {topCampaigns.slice(0, 3).map((campaign, index) => (
+                    <div key={campaign._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-xs">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm truncate max-w-32">{campaign.name}</p>
+                          <p className="text-xs text-gray-500">{campaign.type.toUpperCase()}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900 text-sm">{campaign.successRate}%</p>
+                        <p className="text-xs text-gray-500">{campaign.totalSent} sent</p>
+                      </div>
+                    </div>
+                  ))}
+                  {topCampaigns.length === 0 && (
+                    <div className="text-center py-6">
+                      <Calendar size={32} className="mx-auto mb-2 text-gray-300" />
+                      <p className="text-sm text-gray-500">No campaigns yet</p>
+                      <button
+                        onClick={() => navigate("/campaigns")}
+                        className="mt-2 text-sm text-blue-600 hover:text-blue-700"
+                      >
+                        Create your first campaign
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Top Campaigns Performance */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Top Performing Campaigns</h2>
-            <Mail className="text-blue-500" size={24} />
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Campaign</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Sent</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Opened</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Clicked</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Revenue</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Performance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topCampaigns.map((campaign, index) => {
-                  const openRate = ((campaign.opened / campaign.sent) * 100).toFixed(1);
-                  const clickRate = ((campaign.clicked / campaign.sent) * 100).toFixed(1);
-                  return (
-                    <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium text-gray-900">{campaign.name}</td>
-                      <td className="py-3 px-4 text-gray-600">{campaign.sent.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-gray-600">{campaign.opened.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-gray-600">{campaign.clicked.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-gray-600">${campaign.revenue.toLocaleString()}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                            {openRate}% open
-                          </span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                            {clickRate}% click
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <button
+            onClick={() => navigate("/campaigns")}
+            className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow text-left"
+          >
+            <div className="flex items-center space-x-3">
+              <Plus size={24} className="text-blue-600" />
+              <div>
+                <h4 className="font-semibold text-gray-900">Create Campaign</h4>
+                <p className="text-sm text-gray-600">Start a new marketing campaign</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate("/audience")}
+            className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow text-left"
+          >
+            <div className="flex items-center space-x-3">
+              <Users size={24} className="text-purple-600" />
+              <div>
+                <h4 className="font-semibold text-gray-900">Build Audience</h4>
+                <p className="text-sm text-gray-600">Create targeted audience segments</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate("/campaign-history")}
+            className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow text-left"
+          >
+            <div className="flex items-center space-x-3">
+              <Activity size={24} className="text-green-600" />
+              <div>
+                <h4 className="font-semibold text-gray-900">View History</h4>
+                <p className="text-sm text-gray-600">Check campaign performance</p>
+              </div>
+            </div>
+          </button>
         </div>
       </div>
     </div>

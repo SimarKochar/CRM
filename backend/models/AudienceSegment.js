@@ -9,7 +9,8 @@ const audienceSegmentSchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        required: [true, 'Segment description is required'],
+        required: false,
+        default: '',
         trim: true,
         maxlength: [500, 'Description cannot be more than 500 characters']
     },

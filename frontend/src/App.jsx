@@ -1,4 +1,11 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import { useState, useEffect } from "react";
 import Header from "./components/Header";
 import Login from "./pages/Login";
@@ -65,73 +72,77 @@ function App() {
         <main className="flex-1 w-full">
           <Routes>
             {/* Public routes */}
-            <Route 
-              path="/login" 
+            <Route
+              path="/login"
               element={
-                isAuthenticated ? 
-                <Navigate to="/dashboard" replace /> : 
-                <Login onLogin={handleLogin} />
-              } 
+                isAuthenticated ? (
+                  <Navigate to="/dashboard" replace />
+                ) : (
+                  <Login onLogin={handleLogin} />
+                )
+              }
             />
-            
+
             {/* Protected routes */}
-            <Route 
-              path="/" 
+            <Route
+              path="/"
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
                   <Navigate to="/dashboard" replace />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/dashboard" 
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
                   <Dashboard />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/customers" 
+            <Route
+              path="/customers"
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
                   <Customers />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/campaigns" 
+            <Route
+              path="/campaigns"
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
                   <Campaigns />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/audience-builder" 
+            <Route
+              path="/audience-builder"
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
                   <AudienceBuilder />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/campaign-history" 
+            <Route
+              path="/campaign-history"
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
                   <CampaignHistory />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
+
             {/* Catch all - redirect to dashboard if authenticated, login if not */}
-            <Route 
-              path="*" 
+            <Route
+              path="*"
               element={
-                isAuthenticated ? 
-                <Navigate to="/dashboard" replace /> : 
-                <Navigate to="/login" replace />
-              } 
+                isAuthenticated ? (
+                  <Navigate to="/dashboard" replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
             />
           </Routes>
         </main>

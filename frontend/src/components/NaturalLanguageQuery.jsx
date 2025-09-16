@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { 
-  MessageSquare, 
-  Wand2, 
-  ArrowRight, 
+import React, { useState } from "react";
+import {
+  MessageSquare,
+  Wand2,
+  ArrowRight,
   CheckCircle,
   AlertCircle,
   Lightbulb,
-  Sparkles
-} from 'lucide-react';
+  Sparkles,
+} from "lucide-react";
 
 const NaturalLanguageQuery = ({ onRulesGenerated, isOpen, onClose }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [generatedRules, setGeneratedRules] = useState(null);
   const [examples] = useState([
@@ -18,123 +18,136 @@ const NaturalLanguageQuery = ({ onRulesGenerated, isOpen, onClose }) => {
     "Customers from California who bought electronics in the last 30 days",
     "VIP customers who opened emails but didn't click any links",
     "New users who signed up this month but haven't made a purchase",
-    "High-value customers who spent more than $1000 last year"
+    "High-value customers who spent more than $1000 last year",
   ]);
 
   const parseNaturalLanguage = async (text) => {
     setIsProcessing(true);
-    
+
     // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+
     // AI-powered natural language parsing (simulated)
     const rules = [];
     const lowerText = text.toLowerCase();
-    
+
     // Parse time-based conditions
-    if (lowerText.includes('haven\'t') && lowerText.includes('month')) {
+    if (lowerText.includes("haven't") && lowerText.includes("month")) {
       const monthMatch = lowerText.match(/(\d+)\s*month/);
       const months = monthMatch ? parseInt(monthMatch[1]) : 6;
       rules.push({
-        field: 'lastPurchaseDate',
-        operator: 'before',
+        field: "lastPurchaseDate",
+        operator: "before",
         value: `${months} months ago`,
-        logic: 'and'
+        logic: "and",
       });
     }
-    
+
     // Parse spending conditions
-    if (lowerText.includes('spent') || lowerText.includes('spend')) {
-      const amountMatch = lowerText.match(/[\$₹]?(\d+(?:,\d{3})*(?:\.\d{2})?)[k]?/);
+    if (lowerText.includes("spent") || lowerText.includes("spend")) {
+      const amountMatch = lowerText.match(
+        /[\$₹]?(\d+(?:,\d{3})*(?:\.\d{2})?)[k]?/
+      );
       if (amountMatch) {
-        let amount = amountMatch[1].replace(/,/g, '');
-        if (lowerText.includes('k')) amount = parseFloat(amount) * 1000;
-        
-        const operator = lowerText.includes('over') || lowerText.includes('more than') ? 'greater_than' : 
-                        lowerText.includes('under') || lowerText.includes('less than') ? 'less_than' : 'equals';
-        
+        let amount = amountMatch[1].replace(/,/g, "");
+        if (lowerText.includes("k")) amount = parseFloat(amount) * 1000;
+
+        const operator =
+          lowerText.includes("over") || lowerText.includes("more than")
+            ? "greater_than"
+            : lowerText.includes("under") || lowerText.includes("less than")
+            ? "less_than"
+            : "equals";
+
         rules.push({
-          field: 'totalSpent',
+          field: "totalSpent",
           operator: operator,
           value: amount.toString(),
-          logic: rules.length > 0 ? 'and' : ''
+          logic: rules.length > 0 ? "and" : "",
         });
       }
     }
-    
+
     // Parse location conditions
-    if (lowerText.includes('from ') || lowerText.includes('in ')) {
-      const locationMatch = lowerText.match(/(?:from|in)\s+([a-zA-Z\s]+?)(?:\s+who|\s+and|$)/);
+    if (lowerText.includes("from ") || lowerText.includes("in ")) {
+      const locationMatch = lowerText.match(
+        /(?:from|in)\s+([a-zA-Z\s]+?)(?:\s+who|\s+and|$)/
+      );
       if (locationMatch) {
         rules.push({
-          field: 'location',
-          operator: 'contains',
+          field: "location",
+          operator: "contains",
           value: locationMatch[1].trim(),
-          logic: rules.length > 0 ? 'and' : ''
+          logic: rules.length > 0 ? "and" : "",
         });
       }
     }
-    
+
     // Parse category conditions
-    if (lowerText.includes('bought') || lowerText.includes('purchased')) {
-      const categoryMatch = lowerText.match(/(?:bought|purchased)\s+([a-zA-Z\s]+?)(?:\s+in|\s+who|\s+and|$)/);
+    if (lowerText.includes("bought") || lowerText.includes("purchased")) {
+      const categoryMatch = lowerText.match(
+        /(?:bought|purchased)\s+([a-zA-Z\s]+?)(?:\s+in|\s+who|\s+and|$)/
+      );
       if (categoryMatch) {
         rules.push({
-          field: 'category',
-          operator: 'equals',
+          field: "category",
+          operator: "equals",
           value: categoryMatch[1].trim(),
-          logic: rules.length > 0 ? 'and' : ''
+          logic: rules.length > 0 ? "and" : "",
         });
       }
     }
-    
+
     // Parse email engagement conditions
-    if (lowerText.includes('opened emails') || lowerText.includes('email')) {
-      if (lowerText.includes('didn\'t click') || lowerText.includes('no click')) {
+    if (lowerText.includes("opened emails") || lowerText.includes("email")) {
+      if (
+        lowerText.includes("didn't click") ||
+        lowerText.includes("no click")
+      ) {
         rules.push({
-          field: 'emailClicks',
-          operator: 'equals',
-          value: '0',
-          logic: rules.length > 0 ? 'and' : ''
+          field: "emailClicks",
+          operator: "equals",
+          value: "0",
+          logic: rules.length > 0 ? "and" : "",
         });
         rules.push({
-          field: 'emailOpens',
-          operator: 'greater_than',
-          value: '0',
-          logic: 'and'
+          field: "emailOpens",
+          operator: "greater_than",
+          value: "0",
+          logic: "and",
         });
       }
     }
-    
+
     // Parse user status conditions
-    if (lowerText.includes('new users') || lowerText.includes('new customer')) {
+    if (lowerText.includes("new users") || lowerText.includes("new customer")) {
       rules.push({
-        field: 'registrationDate',
-        operator: 'after',
-        value: '30 days ago',
-        logic: rules.length > 0 ? 'and' : ''
+        field: "registrationDate",
+        operator: "after",
+        value: "30 days ago",
+        logic: rules.length > 0 ? "and" : "",
       });
     }
-    
-    if (lowerText.includes('vip') || lowerText.includes('high-value')) {
+
+    if (lowerText.includes("vip") || lowerText.includes("high-value")) {
       rules.push({
-        field: 'customerTier',
-        operator: 'equals',
-        value: 'VIP',
-        logic: rules.length > 0 ? 'and' : ''
+        field: "customerTier",
+        operator: "equals",
+        value: "VIP",
+        logic: rules.length > 0 ? "and" : "",
       });
     }
-    
+
     // If no rules were parsed, create a default rule
     if (rules.length === 0) {
       rules.push({
-        field: 'status',
-        operator: 'equals',
-        value: 'active',
-        logic: ''
+        field: "status",
+        operator: "equals",
+        value: "active",
+        logic: "",
       });
     }
-    
+
     setGeneratedRules(rules);
     setIsProcessing(false);
     return rules;
@@ -233,11 +246,15 @@ const NaturalLanguageQuery = ({ onRulesGenerated, isOpen, onClose }) => {
             <div className="space-y-4">
               <div className="flex items-center text-green-600">
                 <CheckCircle className="mr-2" size={20} />
-                <span className="font-medium">Rules Generated Successfully!</span>
+                <span className="font-medium">
+                  Rules Generated Successfully!
+                </span>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-700 mb-3">Generated Rules:</h4>
+                <h4 className="font-medium text-gray-700 mb-3">
+                  Generated Rules:
+                </h4>
                 <div className="space-y-2">
                   {generatedRules.map((rule, index) => (
                     <div key={index} className="flex items-center text-sm">
@@ -270,7 +287,7 @@ const NaturalLanguageQuery = ({ onRulesGenerated, isOpen, onClose }) => {
                   Apply Rules
                 </button>
                 <button
-                  onClick={() => setQuery('')}
+                  onClick={() => setQuery("")}
                   className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
                 >
                   Try Different Query
@@ -285,10 +302,14 @@ const NaturalLanguageQuery = ({ onRulesGenerated, isOpen, onClose }) => {
               <div className="text-sm text-yellow-700">
                 <p className="font-medium">Tips for better results:</p>
                 <ul className="mt-1 list-disc list-inside space-y-1">
-                  <li>Use specific time periods (e.g., "6 months", "30 days")</li>
+                  <li>
+                    Use specific time periods (e.g., "6 months", "30 days")
+                  </li>
                   <li>Include spending amounts with currency symbols</li>
                   <li>Mention specific locations or categories</li>
-                  <li>Use clear action words like "bought", "clicked", "opened"</li>
+                  <li>
+                    Use clear action words like "bought", "clicked", "opened"
+                  </li>
                 </ul>
               </div>
             </div>

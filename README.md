@@ -11,16 +11,19 @@ A modern Customer Relationship Management system built with React and Node.js fe
 ## 🚀 Features
 
 ### 🔐 Authentication
+
 - Secure login and registration
 - JWT-based authentication
 - User session management
 
 ### 🤖 AI-Powered Features
+
 - **Natural Language Query**: Convert plain English to audience rules
   - Example: "People who haven't shopped in 6 months and spent over $500"
 - **AI Email Generator**: Generate complete email campaigns with customizable tone and targeting
 
 ### 🎯 Audience Builder
+
 - **Dynamic Rule Builder**: Create complex audience segments using flexible rule logic
 - **Boolean Logic Support**: Use AND/OR operators for sophisticated targeting
 - **AI Integration**: "Ask AI" button for natural language segment creation
@@ -28,18 +31,21 @@ A modern Customer Relationship Management system built with React and Node.js fe
 - **Segment Management**: Save, search, and reuse audience segments
 
 ### 📧 Campaign Management
+
 - Create and manage email campaigns
 - AI-powered email content generation
 - Target specific audience segments
 - Campaign performance tracking
 
 ### 📊 Campaign History
+
 - View all past campaigns and their performance
 - Detailed delivery statistics (sent, delivered, opened, clicked)
 - Campaign status tracking (active, completed, scheduled)
 - Performance metrics and analytics
 
 ### 👥 Customer Management
+
 - Customer database with profiles
 - Customer interaction history
 - Segmentation insights
@@ -47,6 +53,7 @@ A modern Customer Relationship Management system built with React and Node.js fe
 ## 🛠️ Technology Stack
 
 ### Frontend
+
 - **React 19.1.1** with Hooks and modern patterns
 - **Vite 4.5.0** for fast development and building
 - **Tailwind CSS 3.3.0** for responsive styling
@@ -54,6 +61,7 @@ A modern Customer Relationship Management system built with React and Node.js fe
 - **React Router DOM** for client-side routing
 
 ### Backend
+
 - **Node.js** with Express.js framework
 - **MongoDB Atlas** for cloud database
 - **JWT** for secure authentication
@@ -61,6 +69,7 @@ A modern Customer Relationship Management system built with React and Node.js fe
 - **Joi** for data validation
 
 ### AI Features
+
 - **Natural Language Processing** for audience segmentation
 - **AI Content Generation** for email campaigns
 - **Intelligent Query Parsing** for plain English rules
@@ -68,6 +77,7 @@ A modern Customer Relationship Management system built with React and Node.js fe
 ## 📦 Installation & Setup
 
 ### Prerequisites
+
 - Node.js (v16 or higher)
 - MongoDB Atlas account
 - npm or yarn
@@ -76,18 +86,21 @@ A modern Customer Relationship Management system built with React and Node.js fe
 ### Installation Steps
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/SimarKochar/CRM-Frontend.git
    cd CRM-Frontend
    ```
 
 2. **Backend Setup**
+
    ```bash
    cd backend
    npm install
    ```
 
 3. **Frontend Setup**
+
    ```bash
    cd frontend
    npm install
@@ -95,6 +108,7 @@ A modern Customer Relationship Management system built with React and Node.js fe
 
 4. **Environment Configuration**
    Create `.env` file in backend directory:
+
    ```
    MONGODB_URI=your_mongodb_atlas_connection_string
    JWT_SECRET=your_jwt_secret_key
@@ -102,14 +116,16 @@ A modern Customer Relationship Management system built with React and Node.js fe
    ```
 
 5. **Start the Application**
-   
+
    Terminal 1 (Backend):
+
    ```bash
    cd backend
    npm start
    ```
-   
+
    Terminal 2 (Frontend):
+
    ```bash
    cd frontend
    npm run dev
@@ -122,10 +138,12 @@ A modern Customer Relationship Management system built with React and Node.js fe
 ## 🎮 Usage
 
 ### Authentication
+
 1. Register a new account or login with existing credentials
 2. Navigate through the application using the header menu
 
 ### Creating Audience Segments
+
 1. Go to **Audience Builder**
 2. Use the **"Ask AI"** button for natural language queries
    - Example: "People who haven't purchased in 3 months"
@@ -133,6 +151,7 @@ A modern Customer Relationship Management system built with React and Node.js fe
 4. Save your segment for use in campaigns
 
 ### Creating Campaigns
+
 1. Go to **Campaigns**
 2. Fill in campaign details
 3. Use **"AI Generate"** for AI-powered email content
@@ -168,17 +187,20 @@ CRM-Frontend/
 ## 🎯 Key Components
 
 ### AudienceBuilder
+
 - **AI Natural Language Query**: Convert plain English to segment rules
 - **Dynamic Rule Builder**: Create complex audience segments
 - **Boolean Logic Support**: Use AND/OR operators
 - **Real-time Preview**: Calculate audience size before saving
 
 ### Campaigns
+
 - **AI Email Generator**: Automated email content creation
 - **Campaign Management**: Create and track email campaigns
 - **Audience Integration**: Target specific segments
 
 ### Campaign History
+
 - **Performance Analytics**: Track campaign metrics
 - **Delivery Statistics**: Monitor sent, delivered, opened, clicked
 - **Status Tracking**: Active, completed, scheduled campaigns
@@ -195,6 +217,7 @@ CRM-Frontend/
 ## 🚀 Available Scripts
 
 ### Backend
+
 ```bash
 cd backend
 npm start          # Start backend server
@@ -202,6 +225,7 @@ npm run dev        # Start with nodemon
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 npm run dev        # Start development server
@@ -243,6 +267,7 @@ This project is licensed under the MIT License.
 ## 📞 Contact
 
 For questions or support, please open an issue on GitHub.
+
 - [ ] Advanced reporting dashboard
 - [ ] Mobile app support
 

@@ -7,8 +7,6 @@ import {
   Calendar,
   CheckCircle,
   XCircle,
-  Eye,
-  MoreHorizontal,
   Filter,
   Search,
   AlertCircle,
@@ -20,8 +18,9 @@ const CampaignHistory = () => {
   const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Fetch campaigns on component mount
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   useEffect(() => {
     fetchCampaigns();
   }, []);
@@ -29,89 +28,91 @@ const CampaignHistory = () => {
   const fetchCampaigns = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/campaigns', {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:5001/api/campaigns", {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.ok) {
         const data = await response.json();
-        setCampaigns(data.data.campaigns || []);
+        console.log("CampaignHistory API response:", data);
+        const campaignData = Array.isArray(data)
+          ? data
+          : data.data?.campaigns || [];
+        console.log("Processed campaign data:", campaignData);
+        setCampaigns(campaignData);
+      } else if (response.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
       } else {
-        console.error('Failed to fetch campaigns');
+        console.error("Failed to fetch campaigns");
+        setCampaigns([]);
       }
     } catch (error) {
-      console.error('Error fetching campaigns:', error);
+      console.error("Error fetching campaigns:", error);
+      setCampaigns([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Simulate sending a campaign
   const simulateSendCampaign = async (campaignId) => {
     try {
-      const token = localStorage.getItem('token');
-      
-      // First update status to 'sending'
-      setCampaigns(prev => prev.map(camp => 
-        camp._id === campaignId 
-          ? { ...camp, status: 'sending' }
-          : camp
-      ));
+      const token = localStorage.getItem("token");
 
-      // Simulate the sending process
-      setTimeout(async () => {
-        // Generate realistic stats based on audience size
-        const campaign = campaigns.find(c => c._id === campaignId);
-        const audienceSize = campaign?.audienceSegment?.audienceSize || 100;
-        
-        const sent = audienceSize;
-        const failed = Math.floor(audienceSize * 0.05); // 5% failure rate
-        const delivered = sent - failed;
-        const opened = Math.floor(delivered * 0.25); // 25% open rate
-        const clicked = Math.floor(opened * 0.15); // 15% click rate
+      const response = await fetch(
+        `http://localhost:5001/api/campaigns/${campaignId}/send`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-        // Update campaign with completed status and stats
-        setCampaigns(prev => prev.map(camp => 
-          camp._id === campaignId 
-            ? { 
-                ...camp, 
-                status: 'completed',
-                sentAt: new Date().toISOString(),
-                stats: {
-                  sent,
-                  failed,
-                  delivered,
-                  opened,
-                  clicked
-                }
-              }
-            : camp
-        ));
-
-        alert(`Campaign sent! ${delivered} emails delivered successfully.`);
-      }, 3000); // 3 second simulation
-
+      if (response.ok) {
+        await fetchCampaigns();
+        alert("Campaign sent successfully!");
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to send campaign");
+      }
     } catch (error) {
-      console.error('Error sending campaign:', error);
-      alert('Failed to send campaign');
+      console.error("Error sending campaign:", error);
+      alert(`Failed to send campaign: ${error.message}`);
     }
   };
 
-  // Pause a sending campaign
-  const pauseCampaign = async (campaignId) => {
-    setCampaigns(prev => prev.map(camp => 
-      camp._id === campaignId 
-        ? { ...camp, status: 'paused' }
-        : camp
-    ));
-    alert('Campaign paused');
-  };
+  const resetCampaign = async (campaignId) => {
+    try {
+      const token = localStorage.getItem("token");
 
-  const [statusFilter, setStatusFilter] = useState("all");
+      const response = await fetch(
+        `http://localhost:5001/api/campaigns/${campaignId}/reset`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        await fetchCampaigns();
+        alert("Campaign reset to draft successfully!");
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to reset campaign");
+      }
+    } catch (error) {
+      console.error("Error resetting campaign:", error);
+      alert(`Failed to reset campaign: ${error.message}`);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -128,27 +129,6 @@ const CampaignHistory = () => {
     }
   };
 
-  const getDeliveryRate = (campaign) => {
-    const sent = campaign.stats?.sent || 0;
-    const delivered = campaign.stats?.delivered || 0;
-    if (sent === 0) return 0;
-    return ((delivered / sent) * 100).toFixed(1);
-  };
-
-  const getOpenRate = (campaign) => {
-    const delivered = campaign.stats?.delivered || 0;
-    const opened = campaign.stats?.opened || 0;
-    if (delivered === 0) return 0;
-    return ((opened / delivered) * 100).toFixed(1);
-  };
-
-  const getClickRate = (campaign) => {
-    const opened = campaign.stats?.opened || 0;
-    const clicked = campaign.stats?.clicked || 0;
-    if (opened === 0) return 0;
-    return ((clicked / opened) * 100).toFixed(1);
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return "Not sent";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -160,11 +140,15 @@ const CampaignHistory = () => {
     });
   };
 
-  const filteredCampaigns = campaigns
+  const filteredCampaigns = (Array.isArray(campaigns) ? campaigns : [])
     .filter(
       (campaign) =>
-        campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (campaign.audienceSegment?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+        (campaign.name || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        (campaign.audienceSegment?.name || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
     )
     .filter(
       (campaign) => statusFilter === "all" || campaign.status === statusFilter
@@ -184,8 +168,8 @@ const CampaignHistory = () => {
               Track performance and delivery statistics for all campaigns
             </p>
           </div>
-          <button 
-            onClick={() => navigate('/campaigns')}
+          <button
+            onClick={() => navigate("/campaigns")}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
           >
             <Plus size={20} />
@@ -195,15 +179,26 @@ const CampaignHistory = () => {
 
         {/* Status Guide */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h3 className="text-sm font-semibold text-blue-900 mb-2">📊 Campaign Status Guide:</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
-            <div><span className="font-medium text-gray-700">Draft:</span> <span className="text-gray-600">Not sent yet</span></div>
-            <div><span className="font-medium text-blue-700">Scheduled:</span> <span className="text-gray-600">Will send later</span></div>
-            <div><span className="font-medium text-yellow-700">Sending:</span> <span className="text-gray-600">Currently sending</span></div>
-            <div><span className="font-medium text-green-700">Completed:</span> <span className="text-gray-600">Successfully sent</span></div>
-            <div><span className="font-medium text-red-700">Failed:</span> <span className="text-gray-600">Had delivery errors</span></div>
-            <div><span className="font-medium text-orange-700">Paused:</span> <span className="text-gray-600">Stopped by user</span></div>
+          <h3 className="text-sm font-semibold text-blue-900 mb-2">
+            📊 Campaign Status Guide:
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+            <div>
+              <span className="font-medium text-gray-700">Draft:</span>{" "}
+              <span className="text-gray-600">Campaign created but not sent</span>
+            </div>
+            <div>
+              <span className="font-medium text-yellow-700">Sending:</span>{" "}
+              <span className="text-gray-600">Campaign is being processed</span>
+            </div>
+            <div>
+              <span className="font-medium text-green-700">Completed:</span>{" "}
+              <span className="text-gray-600">Processing finished (no real email service integrated)</span>
+            </div>
           </div>
+          <p className="text-xs text-blue-700 mt-2 italic">
+            ℹ️ Note: This is a demo CRM. No actual emails are sent as no email service provider is integrated.
+          </p>
         </div>
 
         {/* Filters */}
@@ -238,7 +233,7 @@ const CampaignHistory = () => {
         </div>
 
         {/* Core Metrics Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
             <div className="flex items-center justify-between">
               <div>
@@ -247,7 +242,7 @@ const CampaignHistory = () => {
                 </p>
                 <p className="text-3xl font-bold text-blue-700">
                   {campaigns
-                    .reduce((sum, c) => sum + c.sent, 0)
+                    .reduce((sum, c) => sum + (c.metrics?.sent || 0), 0)
                     .toLocaleString()}
                 </p>
               </div>
@@ -261,62 +256,11 @@ const CampaignHistory = () => {
                 <p className="text-sm font-medium text-red-600">Total Failed</p>
                 <p className="text-3xl font-bold text-red-700">
                   {campaigns
-                    .reduce((sum, c) => sum + c.failed, 0)
+                    .reduce((sum, c) => sum + (c.metrics?.failed || 0), 0)
                     .toLocaleString()}
                 </p>
               </div>
               <AlertCircle size={28} className="text-red-600" />
-            </div>
-          </div>
-
-          <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-600">
-                  Total Audience Size
-                </p>
-                <p className="text-3xl font-bold text-purple-700">
-                  {campaigns
-                    .reduce((sum, c) => sum + c.audienceSize, 0)
-                    .toLocaleString()}
-                </p>
-              </div>
-              <Users size={28} className="text-purple-600" />
-            </div>
-          </div>
-        </div>
-
-        {/* Additional Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Total Campaigns</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {campaigns.length}
-                </p>
-              </div>
-              <Target size={24} className="text-blue-600" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Avg. Delivery Rate</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {(
-                    campaigns
-                      .filter((c) => c.sent > 0)
-                      .reduce(
-                        (sum, c) => sum + parseFloat(getDeliveryRate(c)),
-                        0
-                      ) / campaigns.filter((c) => c.sent > 0).length || 0
-                  ).toFixed(1)}
-                  %
-                </p>
-              </div>
-              <CheckCircle size={24} className="text-green-600" />
             </div>
           </div>
         </div>
@@ -327,6 +271,12 @@ const CampaignHistory = () => {
             <h2 className="text-lg font-semibold text-gray-900">
               Recent Campaigns
             </h2>
+            {/* Debug info */}
+            <div className="mt-2 text-xs text-gray-500">
+              Raw campaigns: {campaigns.length} | Filtered:{" "}
+              {filteredCampaigns.length} | Search: "{searchTerm}" | Status:{" "}
+              {statusFilter}
+            </div>
           </div>
 
           <div className="divide-y divide-gray-200">
@@ -338,8 +288,14 @@ const CampaignHistory = () => {
             ) : filteredCampaigns.length === 0 ? (
               <div className="text-center py-12">
                 <Mail size={48} className="mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No campaigns found</h3>
-                <p className="text-gray-600 mb-4">Create your first campaign to get started</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No campaigns found
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {campaigns.length > 0
+                    ? `${campaigns.length} campaigns available but filtered out. Check your search/filter settings.`
+                    : "Create your first campaign to get started"}
+                </p>
                 <button
                   onClick={() => navigate("/campaigns")}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -349,130 +305,70 @@ const CampaignHistory = () => {
               </div>
             ) : (
               filteredCampaigns.map((campaign) => (
-              <div
-                key={campaign.id}
-                className="p-6 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {campaign.name}
-                      </h3>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          campaign.status
-                        )}`}
-                      >
-                        {campaign.status}
-                      </span>
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
-                        {campaign.type.toUpperCase()}
-                      </span>
-                    </div>
-
-                    <p className="text-sm text-gray-600 mb-4">
-                      Segment:{" "}
-                      <span className="font-medium">
-                        {campaign.audienceSegment?.name || 'Unknown Segment'}
-                      </span> •
-                      Audience:{" "}
-                      <span className="font-medium">
-                        {(campaign.audienceSegment?.audienceSize || campaign.stats?.sent || 0).toLocaleString()}
-                      </span>{" "}
-                      users
-                    </p>
-
-                    {/* Core Metrics - Sent, Failed, Audience Size */}
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-2xl font-bold text-blue-700">
-                          {campaign.status === 'draft' ? '-' : (campaign.stats?.sent || 0).toLocaleString()}
-                        </p>
-                        <p className="text-sm font-medium text-blue-600">
-                          Messages Sent
-                        </p>
+                <div
+                  key={campaign._id}
+                  className="p-6 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {campaign.name}
+                        </h3>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            campaign.status
+                          )}`}
+                        >
+                          {campaign.status}
+                        </span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                          {campaign.type.toUpperCase()}
+                        </span>
                       </div>
-                      <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-                        <p className="text-2xl font-bold text-red-700">
-                          {campaign.status === 'draft' ? '-' : (campaign.stats?.failed || 0).toLocaleString()}
-                        </p>
-                        <p className="text-sm font-medium text-red-600">
-                          Failed
-                        </p>
-                      </div>
-                      <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
-                        <p className="text-2xl font-bold text-purple-700">
-                          {(campaign.audienceSegment?.audienceSize || 0).toLocaleString()}
-                        </p>
-                        <p className="text-sm font-medium text-purple-600">
-                          Target Audience
-                        </p>
+
+                      <p className="text-sm text-gray-600 mb-4">
+                        Segment:{" "}
+                        <span className="font-medium">
+                          {campaign.audienceSegment?.name || "Unknown Segment"}
+                        </span>{" "}
+                        • Type: {campaign.type.toUpperCase()}
+                      </p>
+
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                          <span>Created: {formatDate(campaign.createdAt)}</span>
+                          {campaign.sentAt && (
+                            <>
+                              <span>•</span>
+                              <span>Sent: {formatDate(campaign.sentAt)}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Additional Stats (Secondary) */}
-                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100">
-                      <div className="text-center">
-                        <p className="text-lg font-semibold text-green-600">
-                          {campaign.status === 'draft' ? '-' : (campaign.stats?.delivered || 0).toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Delivered {campaign.status === 'draft' ? '' : `(${getDeliveryRate(campaign)}%)`}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-semibold text-blue-600">
-                          {campaign.status === 'draft' ? '-' : (campaign.stats?.opened || 0).toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Opened {campaign.status === 'draft' ? '' : `(${getOpenRate(campaign)}%)`}
-                        </p>
-                      </div>
+                    <div className="flex items-center space-x-2 ml-4">
+                      {campaign.status === "draft" && (
+                        <button
+                          onClick={() => simulateSendCampaign(campaign._id)}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors flex items-center space-x-1"
+                        >
+                          <Send size={14} />
+                          <span>Send</span>
+                        </button>
+                      )}
+                      {campaign.status === "sending" && (
+                        <button
+                          onClick={() => resetCampaign(campaign._id)}
+                          className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700 transition-colors"
+                        >
+                          Reset to Draft
+                        </button>
+                      )}
                     </div>
-
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
-                        <span>Created: {formatDate(campaign.createdAt)}</span>
-                        <span>•</span>
-                        <span>Sent: {formatDate(campaign.sentAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2 ml-4">
-                    {campaign.status === 'draft' && (
-                      <button 
-                        onClick={() => simulateSendCampaign(campaign._id)}
-                        className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors flex items-center space-x-1"
-                      >
-                        <Send size={14} />
-                        <span>Send</span>
-                      </button>
-                    )}
-                    {campaign.status === 'sending' && (
-                      <button 
-                        onClick={() => pauseCampaign(campaign._id)}
-                        className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700 transition-colors"
-                      >
-                        Pause
-                      </button>
-                    )}
-                    <button 
-                      className="p-2 hover:bg-gray-100 rounded-lg"
-                      title="View Campaign Details"
-                    >
-                      <Eye size={16} className="text-gray-400" />
-                    </button>
-                    <button 
-                      className="p-2 hover:bg-gray-100 rounded-lg"
-                      title="More Actions"
-                    >
-                      <MoreHorizontal size={16} className="text-gray-400" />
-                    </button>
                   </div>
                 </div>
-              </div>
               ))
             )}
           </div>

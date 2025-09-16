@@ -21,14 +21,33 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Password is required'],
+        required: function () {
+            // Password not required for Google OAuth users or customers
+            return !this.googleId && (!this.role || this.role !== 'customer');
+        },
         minlength: [6, 'Password must be at least 6 characters'],
         select: false // Don't include password in queries by default
     },
+    googleId: {
+        type: String,
+        sparse: true // Allow multiple null values but unique non-null values
+    },
+    provider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local'
+    },
+    profilePicture: {
+        type: String // Can store Google profile picture URL or uploaded image
+    },
+    emailVerified: {
+        type: Boolean,
+        default: false
+    },
     role: {
         type: String,
-        enum: ['user', 'admin'],
-        default: 'user'
+        enum: ['user', 'admin', 'customer'],
+        default: 'admin'
     },
     isActive: {
         type: Boolean,
@@ -36,9 +55,6 @@ const userSchema = new mongoose.Schema({
     },
     lastLogin: {
         type: Date
-    },
-    profilePicture: {
-        type: String
     },
     preferences: {
         theme: {
@@ -56,6 +72,46 @@ const userSchema = new mongoose.Schema({
                 default: true
             }
         }
+    },
+    // Customer-specific fields
+    phone: {
+        type: String
+    },
+    location: {
+        type: String
+    },
+    status: {
+        type: String,
+        enum: ['Active', 'VIP', 'Inactive'],
+        default: 'Active'
+    },
+    totalSpent: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    orders: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    visits: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    lastOrder: {
+        type: Date
+    },
+    company: {
+        type: String
+    },
+    notes: {
+        type: String
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     }
 }, {
     timestamps: true,
@@ -83,8 +139,8 @@ userSchema.virtual('audienceSegments', {
 
 // Pre-save middleware to hash password
 userSchema.pre('save', async function (next) {
-    // Only hash password if it's been modified
-    if (!this.isModified('password')) return next();
+    // Skip password hashing for customers or if password is undefined
+    if (!this.isModified('password') || !this.password || this.role === 'customer') return next();
 
     try {
         // Hash password with cost of 12

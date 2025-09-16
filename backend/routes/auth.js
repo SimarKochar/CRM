@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const Joi = require('joi');
+const passport = require('../config/passport');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
 
@@ -202,10 +203,44 @@ router.get('/me', auth, async (req, res) => {
 // @desc    Logout user (client-side token removal)
 // @access  Private
 router.post('/logout', auth, (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: 'Logout successful'
+    req.logout((err) => {
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                message: 'Error during logout'
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Logout successful'
+        });
     });
 });
+
+// @route   GET /api/auth/google
+// @desc    Authenticate with Google
+// @access  Public
+router.get('/google', passport.authenticate('google', {
+    scope: ['profile', 'email']
+}));
+
+// @route   GET /api/auth/google/callback
+// @desc    Google OAuth callback
+// @access  Public
+router.get('/google/callback',
+    passport.authenticate('google', { failureRedirect: `${process.env.CLIENT_URL}/login?error=auth_failed` }),
+    async (req, res) => {
+        try {
+            // Generate JWT token for the authenticated user
+            const token = generateToken(req.user);
+
+            // Redirect to frontend with token
+            res.redirect(`${process.env.CLIENT_URL}/login?token=${token}`);
+        } catch (error) {
+            console.error('Google callback error:', error);
+            res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);
+        }
+    }
+);
 
 module.exports = router;

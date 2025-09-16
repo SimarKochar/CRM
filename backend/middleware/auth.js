@@ -16,6 +16,8 @@ const auth = async (req, res, next) => {
         }
 
         if (!token) {
+            console.log('AUTH DEBUG: No token provided');
+            console.log('Headers:', req.headers.authorization);
             return res.status(401).json({
                 success: false,
                 message: 'Access denied. No token provided.'
